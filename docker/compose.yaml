@@ -1,0 +1,11 @@
+services:
+
+  blaze-and-boot:
+    image: 'postgres:15.4'
+    build: postgres
+    ports:
+      - '5433:5432'
+    environment:
+      - 'POSTGRES_USER=dbuser'
+      - 'POSTGRES_PASSWORD=secrets'
+      - 'POSTGRES_DB=blaze-and-boot-db'
