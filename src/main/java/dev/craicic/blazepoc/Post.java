@@ -17,7 +17,14 @@ public class Post {
     @OneToMany(mappedBy = "post")
     private Set<Image> images = new HashSet<>();
 
-
+    @Override
+    public String toString() {
+        return "Post{" +
+               "Id=" + Id +
+               ", title='" + title + '\'' +
+               ", body='" + body + '\'' +
+               '}';
+    }
 
     public Set<Image> getImages() {
         return images;
