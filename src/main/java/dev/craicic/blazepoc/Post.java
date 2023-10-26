@@ -23,6 +23,7 @@ public class Post {
                "Id=" + Id +
                ", title='" + title + '\'' +
                ", body='" + body + '\'' +
+               ", images=" + images +
                '}';
     }
 

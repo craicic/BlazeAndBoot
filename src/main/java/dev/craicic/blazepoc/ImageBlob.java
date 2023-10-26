@@ -27,7 +27,6 @@ public class ImageBlob {
         return "ImageBlob{" +
                "id=" + id +
                ", content=" + Arrays.toString(content) +
-               ", image=" + image +
                '}';
     }
 
