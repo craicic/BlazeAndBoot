@@ -1,2 +1,2 @@
-CREATE USER dbuser WITH PASSWORD secrets CREATEDB;
-CREATE DATABASE 'blaze-and-boot-db' WITH OWNER dbuser;
+CREATE USER db_user WITH PASSWORD 'secrets' CREATEDB;
+CREATE DATABASE blaze_and_boot_db WITH OWNER db_user;
