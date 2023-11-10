@@ -10,7 +10,7 @@ import java.util.Set;
 public class Post {
     @Id
     @GeneratedValue
-    private Integer Id;
+    private Integer id;
     private String title;
     private String body;
 
@@ -20,7 +20,7 @@ public class Post {
     @Override
     public String toString() {
         return "Post{" +
-               "Id=" + Id +
+               "Id=" + id +
                ", title='" + title + '\'' +
                ", body='" + body + '\'' +
                ", images=" + images +
@@ -33,11 +33,11 @@ public class Post {
 
 
     public Integer getId() {
-        return Id;
+        return id;
     }
 
     public void setId(Integer id) {
-        Id = id;
+        this.id = id;
     }
 
     public String getTitle() {
