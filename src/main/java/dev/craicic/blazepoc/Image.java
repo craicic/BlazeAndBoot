@@ -17,7 +17,6 @@ public class Image {
     public String toString() {
         return "Image{" +
                "id=" + id +
-               ", post=" + post +
                '}';
     }
 

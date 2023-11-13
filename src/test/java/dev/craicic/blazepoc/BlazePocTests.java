@@ -20,7 +20,7 @@ public class BlazePocTests {
     private EntityManagerFactory emf;
 
     @Test
-    public void getPostsTests() {
+    public void getPostsWithJoinTest() {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
 
@@ -34,11 +34,10 @@ public class BlazePocTests {
         em.getTransaction().commit();
         em.close();
 
-        emf.close();
     }
 
     @Test
-    public void getPostsTestsNoJoin() {
+    public void getPostsNoJoinTest() {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
 
@@ -51,7 +50,19 @@ public class BlazePocTests {
 
         em.getTransaction().commit();
         em.close();
+    }
 
-        emf.close();
+    @Test
+    public void getPostsWithEMTest() {
+        EntityManager em = emf.createEntityManager();
+        em.getTransaction().begin();
+
+        TypedQuery<Post> q = em.createQuery("SELECT p FROM Post p", Post.class);
+        List<Post> r = q.getResultList();
+
+        r.forEach(e -> log.info(e));
+
+        em.getTransaction().commit();
+        em.close();
     }
 }
