@@ -41,4 +41,14 @@ public class PostDto {
     public ImageDto getImage() {
         return image;
     }
+
+    @Override
+    public String toString() {
+        return "PostDto{" +
+               "id=" + id +
+               ", title='" + title + '\'' +
+               ", body='" + body + '\'' +
+               ", image=" + image +
+               '}';
+    }
 }
