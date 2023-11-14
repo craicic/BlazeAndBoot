@@ -8,10 +8,14 @@ public class ImageDto {
     byte[] content;
 
 
+    public ImageDto() {
+    }
+
     public ImageDto(Integer id, byte[] content) {
         this.id = id;
         this.content = content;
     }
+
 
     public Integer getId() {
         return id;

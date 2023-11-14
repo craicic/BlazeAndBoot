@@ -1,17 +1,23 @@
 package dev.craicic.blazepoc;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class PostDto {
 
     private Integer id;
     private String title;
     private String body;
-    private final ImageDto image;
+    private final List<ImageDto> images = new ArrayList<>();
+
+    public PostDto() {
+    }
 
     public PostDto(Integer id, String title, String body, Integer imageId, byte[] content) {
         this.id = id;
         this.title = title;
         this.body = body;
-        this.image = new ImageDto(imageId, content);
+        this.images.add(new ImageDto(imageId, content));
     }
 
     public Integer getId() {
@@ -38,8 +44,8 @@ public class PostDto {
         this.body = body;
     }
 
-    public ImageDto getImage() {
-        return image;
+    public List<ImageDto> getImages() {
+        return this.images;
     }
 
     @Override
@@ -48,7 +54,7 @@ public class PostDto {
                "id=" + id +
                ", title='" + title + '\'' +
                ", body='" + body + '\'' +
-               ", image=" + image +
+               ", image=" + images +
                '}';
     }
 }
