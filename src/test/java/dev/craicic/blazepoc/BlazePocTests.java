@@ -9,9 +9,10 @@ import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-
 import java.util.Arrays;
 import java.util.List;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 @SuppressWarnings({"unchecked", "deprecation"})
 @SpringBootTest
@@ -37,6 +38,8 @@ public class BlazePocTests {
         em.getTransaction().commit();
         em.close();
 
+        assertEquals(10, r.size());
+
     }
 
     @Test
@@ -48,11 +51,11 @@ public class BlazePocTests {
                                                "WHERE ib.id = i.id " +
                                                "AND p.id = i.post.id", PostDto.class);
         List<PostDto> r = q.getResultList();
-
         r.forEach(e -> log.info(e));
-
         em.getTransaction().commit();
         em.close();
+
+        assertEquals(10, r.size());
     }
 
     @Test
@@ -67,6 +70,8 @@ public class BlazePocTests {
 
         em.getTransaction().commit();
         em.close();
+
+        assertEquals(1, r.size());
     }
 
     @Test
@@ -90,9 +95,13 @@ public class BlazePocTests {
                     return List.of(p);
 
                 }).getResultList();
-
         log.info(dto.toString());
+
         em.getTransaction().commit();
         em.close();
+
+        assertEquals(10, dto.size());
+
+
     }
 }
