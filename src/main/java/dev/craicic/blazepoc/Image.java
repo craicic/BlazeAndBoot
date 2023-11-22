@@ -3,6 +3,7 @@ package dev.craicic.blazepoc;
 import jakarta.persistence.*;
 
 @Entity
+@Table(name = "image")
 public class Image {
 
     @Id

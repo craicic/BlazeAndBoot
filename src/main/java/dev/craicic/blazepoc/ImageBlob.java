@@ -7,6 +7,7 @@ import java.sql.Types;
 import java.util.Arrays;
 
 @Entity
+@Table(name = "image_blob")
 public class ImageBlob {
 
     @Id

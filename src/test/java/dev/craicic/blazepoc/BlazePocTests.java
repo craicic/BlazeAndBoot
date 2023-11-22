@@ -76,9 +76,8 @@ public class BlazePocTests {
         Session session = em.unwrap(Session.class);
 
         List<PostDto> dto = (List<PostDto>) session
-                .createQuery("SELECT p.id, p.title, p.body, p.images, ib.content FROM Post p " +
+                .createQuery("SELECT p.id, p.title, p.body, i.id FROM Post p " +
                              "JOIN p.images i ON p.id = i.post.id " +
-                             "JOIN ImageBlob ib ON ib.id = i.id " +
                              "WHERE p.id = 1 ")
                 .setTupleTransformer((tuple, aliases) -> {
                     log.info("Transform tuple");
@@ -87,7 +86,7 @@ public class BlazePocTests {
                     p.setId((Integer) tuple[0]);
                     p.setTitle((String) tuple[1]);
                     p.setBody((String) tuple[2]);
-                    Image image = ((Image) tuple[3]);
+
                     return List.of(p);
 
                 }).getResultList();
