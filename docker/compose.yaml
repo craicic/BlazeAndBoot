@@ -7,5 +7,5 @@ services:
       - '5433:5432'
     environment:
       - 'POSTGRES_USER=db_user'
-      - 'POSTGRES_PASSWORD=secrets'
+      - 'POSTGRES_PASSWORD=secret'
       - 'POSTGRES_DB=blaze_and_boot_db'

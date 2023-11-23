@@ -75,25 +75,57 @@ public class BlazePocTests {
     }
 
     @Test
-    public void getPostWithResultTransformer() {
+    public void getPostsWithResultTransformer() {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
         Session session = em.unwrap(Session.class);
 
-        List<PostDto> dto = (List<PostDto>) session
-                .createQuery("SELECT p.id, p.title, p.body, i.id FROM Post p " +
+        List<PostRTDto> dto = (List<PostRTDto>) session
+                .createQuery("SELECT p.id, p.title, p.body, i.id, ib.content FROM Post p " +
                              "JOIN p.images i ON p.id = i.post.id " +
+                             "JOIN ImageBlob ib ON i.id = ib.id " +
                              "WHERE p.id = 1 ")
                 .setTupleTransformer((tuple, aliases) -> {
                     log.info("Transform tuple");
                     Arrays.stream(tuple).toList().forEach(a->log.info(a));
-                    PostDto p = new PostDto();
+                    PostRTDto p = new PostRTDto();
                     p.setId((Integer) tuple[0]);
                     p.setTitle((String) tuple[1]);
                     p.setBody((String) tuple[2]);
-
+                    p.getImageIds().add((Integer) tuple[3]);
+                    p.getContents().add((byte[]) tuple[4]);
                     return List.of(p);
+                }).getResultList();
+        log.info(dto.toString());
 
+        em.getTransaction().commit();
+        em.close();
+
+        assertEquals(10, dto.size());
+
+
+    }
+
+    @Test
+    public void getPostsWithResultTransformerII() {
+        EntityManager em = emf.createEntityManager();
+        em.getTransaction().begin();
+        Session session = em.unwrap(Session.class);
+
+        List<PostRTDto> dto = (List<PostRTDto>) session
+                .createQuery("SELECT p.id, p.title, p.body, i.id, ib.content FROM Post p " +
+                             "JOIN p.images i ON p.id = i.post.id " +
+                             "JOIN ImageBlob ib ON i.id = ib.id ")
+                .setTupleTransformer((tuple, aliases) -> {
+                    log.info("Transform tuple");
+                    Arrays.stream(tuple).toList().forEach(a->log.info(a));
+                    PostRTDto p = new PostRTDto();
+                    p.setId((Integer) tuple[0]);
+                    p.setTitle((String) tuple[1]);
+                    p.setBody((String) tuple[2]);
+                    p.getImageIds().add((Integer) tuple[3]);
+                    p.getContents().add((byte[]) tuple[4]);
+                    return List.of(p);
                 }).getResultList();
         log.info(dto.toString());
 
