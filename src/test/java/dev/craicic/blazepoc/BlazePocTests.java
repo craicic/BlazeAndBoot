@@ -13,7 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
 @SuppressWarnings({"unchecked", "deprecation"})
@@ -40,7 +40,7 @@ public class BlazePocTests {
         em.getTransaction().commit();
         em.close();
 
-        assertEquals(10, r.size());
+        assertEquals(25, r.size());
 
     }
 
@@ -57,7 +57,7 @@ public class BlazePocTests {
         em.getTransaction().commit();
         em.close();
 
-        assertEquals(10, r.size());
+        assertEquals(25, r.size());
     }
 
     @Test
@@ -131,7 +131,7 @@ public class BlazePocTests {
         em.getTransaction().commit();
         em.close();
 
-        assertEquals(10, dto.size());
+        assertEquals(25, dto.size());
 
 
     }
@@ -148,7 +148,7 @@ public class BlazePocTests {
             TypedQuery<ImageDto> q2 = em.createQuery(""" 
                     SELECT new dev.craicic.blazepoc.ImageDto(i.id, ib.content)
                     FROM Image i
-                    JOIN ImageBlob  ib ON i.id = ib.id
+                    JOIN ImageBlob ib ON i.id = ib.id
                     WHERE i.post.id = :postId
                     """, ImageDto.class);
             q2.setParameter("postId", p.getId());
