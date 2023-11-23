@@ -13,6 +13,12 @@ public class PostDto {
     public PostDto() {
     }
 
+    public PostDto(Integer id, String title, String body) {
+        this.id = id;
+        this.title = title;
+        this.body = body;
+    }
+
     public PostDto(Integer id, String title, String body, Integer imageId, byte[] content) {
         this.id = id;
         this.title = title;

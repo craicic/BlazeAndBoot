@@ -9,8 +9,10 @@ import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+
 import java.util.Arrays;
 import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 
@@ -65,13 +67,10 @@ public class BlazePocTests {
 
         TypedQuery<Post> q = em.createQuery("SELECT p FROM Post p", Post.class);
         List<Post> r = q.getResultList();
-
-        r.forEach(e -> log.info(e));
-
         em.getTransaction().commit();
         em.close();
 
-        assertEquals(1, r.size());
+        assertEquals(5, r.size());
     }
 
     @Test
@@ -87,7 +86,7 @@ public class BlazePocTests {
                              "WHERE p.id = 1 ")
                 .setTupleTransformer((tuple, aliases) -> {
                     log.info("Transform tuple");
-                    Arrays.stream(tuple).toList().forEach(a->log.info(a));
+                    Arrays.stream(tuple).toList().forEach(a -> log.info(a));
                     PostRTDto p = new PostRTDto();
                     p.setId((Integer) tuple[0]);
                     p.setTitle((String) tuple[1]);
@@ -118,7 +117,7 @@ public class BlazePocTests {
                              "JOIN ImageBlob ib ON i.id = ib.id ")
                 .setTupleTransformer((tuple, aliases) -> {
                     log.info("Transform tuple");
-                    Arrays.stream(tuple).toList().forEach(a->log.info(a));
+                    Arrays.stream(tuple).toList().forEach(a -> log.info(a));
                     PostRTDto p = new PostRTDto();
                     p.setId((Integer) tuple[0]);
                     p.setTitle((String) tuple[1]);
@@ -135,5 +134,30 @@ public class BlazePocTests {
         assertEquals(10, dto.size());
 
 
+    }
+
+    @Test
+    public void getPostsWithSuccessiveDtoProjections() {
+        EntityManager em = emf.createEntityManager();
+        em.getTransaction().begin();
+
+        TypedQuery<PostDto> q1 = em.createQuery("SELECT new dev.craicic.blazepoc.PostDto(p.id, p.title, p.body) FROM Post p", PostDto.class);
+        List<PostDto> posts = q1.setMaxResults(4).getResultList();
+
+        for (PostDto p : posts) {
+            TypedQuery<ImageDto> q2 = em.createQuery(""" 
+                    SELECT new dev.craicic.blazepoc.ImageDto(i.id, ib.content)
+                    FROM Image i
+                    JOIN ImageBlob  ib ON i.id = ib.id
+                    WHERE i.post.id = :postId
+                    """, ImageDto.class);
+            q2.setParameter("postId", p.getId());
+            p.getImages().addAll(q2.getResultList());
+        }
+        em.getTransaction().commit();
+        em.close();
+
+        assertEquals(4, posts.size());
+        log.info(posts);
     }
 }
