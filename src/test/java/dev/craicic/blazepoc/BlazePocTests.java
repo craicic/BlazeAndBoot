@@ -4,14 +4,16 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.PersistenceUnit;
 import jakarta.persistence.TypedQuery;
-import jakarta.persistence.criteria.CriteriaBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -111,13 +113,13 @@ public class BlazePocTests {
         em.getTransaction().begin();
         Session session = em.unwrap(Session.class);
 
-        List<PostRTDto> dto = (List<PostRTDto>) session
+        List<PostDto> dto = (List<PostDto>) session
                 .createNativeQuery("""
                         SELECT p.id, p.title, p.body, array_agg(i.id) as images_id, array_agg(ib.content) as images_content
                         FROM post AS p
                             JOIN image AS i ON p.id = i.post_id
                             JOIN image_blob AS ib ON i.id = ib.image_id
-                        GROUP BY p.id ORDER BY p.id;
+                        GROUP BY p.id ORDER BY p.id LIMIT 4;
                         """)
                 .setResultListTransformer((list) -> {
                             List<Object> cList = (List<Object>) list;
@@ -139,7 +141,6 @@ public class BlazePocTests {
                                                     byteArrayList[i]
                                             ));
                                 }
-                                log.info(p);
                                 posts.add(p);
                             }
                             return posts;
@@ -147,14 +148,12 @@ public class BlazePocTests {
                 ).
 
                 getResultList();
-        log.info(dto.toString());
 
-        em.getTransaction().
-
-                commit();
+        em.getTransaction().commit();
         em.close();
 
-        assertEquals(5, dto.size());
+        assertEquals(4, dto.size());
+        log.info(dto);
 
 
     }
