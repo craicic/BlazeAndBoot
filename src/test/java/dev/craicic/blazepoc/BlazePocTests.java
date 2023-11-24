@@ -145,9 +145,7 @@ public class BlazePocTests {
                             }
                             return posts;
                         }
-                ).
-
-                getResultList();
+                ).getResultList();
 
         em.getTransaction().commit();
         em.close();
