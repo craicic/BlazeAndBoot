@@ -4,14 +4,14 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.PersistenceUnit;
 import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -112,26 +112,49 @@ public class BlazePocTests {
         Session session = em.unwrap(Session.class);
 
         List<PostRTDto> dto = (List<PostRTDto>) session
-                .createQuery("SELECT p.id, p.title, p.body, i.id, ib.content FROM Post p " +
-                             "JOIN p.images i ON p.id = i.post.id " +
-                             "JOIN ImageBlob ib ON i.id = ib.id ")
-                .setTupleTransformer((tuple, aliases) -> {
-                    log.info("Transform tuple");
-                    Arrays.stream(tuple).toList().forEach(a -> log.info(a));
-                    PostRTDto p = new PostRTDto();
-                    p.setId((Integer) tuple[0]);
-                    p.setTitle((String) tuple[1]);
-                    p.setBody((String) tuple[2]);
-                    p.getImageIds().add((Integer) tuple[3]);
-                    p.getContents().add((byte[]) tuple[4]);
-                    return List.of(p);
-                }).getResultList();
+                .createNativeQuery("""
+                        SELECT p.id, p.title, p.body, array_agg(i.id) as images_id, array_agg(ib.content) as images_content
+                        FROM post AS p
+                            JOIN image AS i ON p.id = i.post_id
+                            JOIN image_blob AS ib ON i.id = ib.image_id
+                        GROUP BY p.id ORDER BY p.id;
+                        """)
+                .setResultListTransformer((list) -> {
+                            List<Object> cList = (List<Object>) list;
+                            Iterator<Object> itr = cList.iterator();
+                            log.info("Transform list");
+                            List<PostDto> posts = new ArrayList<>();
+                            while (itr.hasNext()) {
+                                Object[] obj = (Object[]) itr.next();
+                                PostDto p = new PostDto();
+                                p.setId((Integer) obj[0]);
+                                p.setTitle((String) obj[1]);
+                                p.setBody((String) obj[2]);
+                                Integer[] imageIdList = (Integer[]) obj[3];
+                                byte[][] byteArrayList = (byte[][]) obj[4];
+                                for (int i = 0; i < imageIdList.length && i < byteArrayList.length; i++) {
+                                    p.getImages().add(
+                                            new ImageDto(
+                                                    imageIdList[i],
+                                                    byteArrayList[i]
+                                            ));
+                                }
+                                log.info(p);
+                                posts.add(p);
+                            }
+                            return posts;
+                        }
+                ).
+
+                getResultList();
         log.info(dto.toString());
 
-        em.getTransaction().commit();
+        em.getTransaction().
+
+                commit();
         em.close();
 
-        assertEquals(25, dto.size());
+        assertEquals(5, dto.size());
 
 
     }
