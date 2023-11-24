@@ -1,7 +1,5 @@
 package dev.craicic.blazepoc;
 
-import java.util.Arrays;
-
 public class ImageDto {
 
     private Integer id;
@@ -37,7 +35,7 @@ public class ImageDto {
     public String toString() {
         return "ImageDto{" +
                "id=" + id +
-               ", content=" + Arrays.toString(content) +
+               ", content=" + content +
                '}';
     }
 }

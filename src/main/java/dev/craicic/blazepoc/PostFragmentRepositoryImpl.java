@@ -20,11 +20,4 @@ public class PostFragmentRepositoryImpl implements PostFragmentRepository {
         this.em = em;
     }
 
-    @Override
-    public List<PostDto> findAllPosts() {
-        TypedQuery<PostDto> q = em.createQuery("SELECT new dev.craicic.blazepoc.PostDto(p.id, p.title, p.body, i.id, ib.content) FROM Image i " +
-                                            "JOIN FETCH ImageBlob ib ON ib.id = i.id " +
-                                            "JOIN FETCH Post p ON p.id = i.post.id", PostDto.class);
-        return q.getResultList();
-    }
 }

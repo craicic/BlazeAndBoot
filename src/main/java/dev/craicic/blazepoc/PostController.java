@@ -13,9 +13,4 @@ public class PostController {
     public PostController(PostRepository postRepository) {
         this.repo = postRepository;
     }
-
-    @GetMapping("/post")
-    public List<PostDto> getPosts() {
-        return this.repo.findAllPosts().stream().toList();
-    }
 }
