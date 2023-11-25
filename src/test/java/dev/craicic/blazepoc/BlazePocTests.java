@@ -34,17 +34,32 @@ public class BlazePocTests {
         TypedQuery<PostDto> q = em.createQuery("""
                 SELECT new dev.craicic.blazepoc.PostDto(p.id, p.title, p.body, i.id, ib.content) FROM Image i
                 JOIN ImageBlob ib ON ib.id = i.id
-                JOIN i.post p ON p.id = i.post.id
+                JOIN i.post p
                 """, PostDto.class);
         List<PostDto> r = q.getResultList();
-
         r.forEach(e -> log.info(e));
-
         em.getTransaction().commit();
         em.close();
 
         assertEquals(25, r.size());
+    }
 
+    @Test
+    public void getPostsWithJoinIITest() {
+        EntityManager em = emf.createEntityManager();
+        em.getTransaction().begin();
+
+        TypedQuery<PostDto> q = em.createQuery("""
+                SELECT new dev.craicic.blazepoc.PostDto(p.id, p.title, p.body, i.id, ib.content) FROM Post p
+                JOIN p.images i
+                JOIN ImageBlob ib ON ib.id = i.id
+                """, PostDto.class);
+        List<PostDto> r = q.getResultList();
+        r.forEach(e -> log.info(e));
+        em.getTransaction().commit();
+        em.close();
+
+        assertEquals(25, r.size());
     }
 
     @Test
@@ -66,12 +81,14 @@ public class BlazePocTests {
     }
 
     @Test
-    public void getPostsWithEMTest() {
+    public void getPostsWithNPlusOneIssueTest() {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
 
         TypedQuery<Post> q = em.createQuery("SELECT p FROM Post p", Post.class);
         List<Post> r = q.getResultList();
+        // This post.toString() will trigger several query because we didn't use a JOIN FETCH clause here.
+        r.forEach(post -> log.info(post));
         em.getTransaction().commit();
         em.close();
 
@@ -79,11 +96,27 @@ public class BlazePocTests {
     }
 
     @Test
-    public void getPostsWithResultTransformer() {
+    public void getPostsWithJoinFetchTest() {
+        EntityManager em = emf.createEntityManager();
+        em.getTransaction().begin();
+
+        TypedQuery<Post> q = em.createQuery("SELECT p FROM Post p JOIN FETCH p.images i", Post.class);
+        List<Post> r = q.getResultList();
+        // The JOIN FETCH clause will result in one query only.
+        r.forEach(post -> log.info(post));
+        em.getTransaction().commit();
+        em.close();
+
+        assertEquals(5, r.size());
+    }
+
+
+    @Test
+    public void getPostsWithResultTransformerTest() {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
         Session session = em.unwrap(Session.class);
-                List<PostDto> dto = (List<PostDto>) session
+        List<PostDto> dto = (List<PostDto>) session
                 .createQuery("""
                         SELECT p.id, p.title, p.body, i.id, ib.content FROM Post p
                         JOIN p.images i ON p.id = i.post.id
@@ -108,7 +141,7 @@ public class BlazePocTests {
     }
 
     @Test
-    public void getPostsWithResultTransformerII() {
+    public void getPostsWithResultTransformerIITest() {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
         Session session = em.unwrap(Session.class);
@@ -155,22 +188,22 @@ public class BlazePocTests {
     }
 
     @Test
-    public void getPostsWithSuccessiveDtoProjections() {
+    public void getPostsWithSuccessiveDtoProjectionsTest() {
         EntityManager em = emf.createEntityManager();
-            em.getTransaction().begin();
+        em.getTransaction().begin();
 
-            TypedQuery<PostDto> q1 = em.createQuery("SELECT new dev.craicic.blazepoc.PostDto(p.id, p.title, p.body) FROM Post p", PostDto.class);
-            List<PostDto> posts = q1.setMaxResults(4).getResultList();
+        TypedQuery<PostDto> q1 = em.createQuery("SELECT new dev.craicic.blazepoc.PostDto(p.id, p.title, p.body) FROM Post p", PostDto.class);
+        List<PostDto> posts = q1.setMaxResults(4).getResultList();
 
-            for (PostDto p : posts) {
-                TypedQuery<ImageDto> q2 = em.createQuery(""" 
+        for (PostDto p : posts) {
+            TypedQuery<ImageDto> q2 = em.createQuery(""" 
                     SELECT new dev.craicic.blazepoc.ImageDto(i.id, ib.content)
                     FROM Image i
                     JOIN ImageBlob ib ON i.id = ib.id
                     WHERE i.post.id = :postId
                     """, ImageDto.class);
-                q2.setParameter("postId", p.getId());
-                p.getImages().addAll(q2.getResultList());
+            q2.setParameter("postId", p.getId());
+            p.getImages().addAll(q2.getResultList());
         }
         em.getTransaction().commit();
         em.close();
