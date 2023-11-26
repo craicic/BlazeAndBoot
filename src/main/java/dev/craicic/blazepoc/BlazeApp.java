@@ -5,12 +5,12 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class BlazePocApplication implements CommandLineRunner {
+public class BlazeApp implements CommandLineRunner {
 
 
 
     public static void main(String[] args) {
-        SpringApplication.run(BlazePocApplication.class, args);
+        SpringApplication.run(BlazeApp.class, args);
     }
 
     @Override

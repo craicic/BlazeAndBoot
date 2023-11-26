@@ -1,4 +1,4 @@
-package dev.craicic.blazepoc;
+package dev.craicic.blazepoc.domain;
 
 import jakarta.persistence.*;
 

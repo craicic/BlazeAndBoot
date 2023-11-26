@@ -1,5 +1,8 @@
 package dev.craicic.blazepoc;
 
+import dev.craicic.blazepoc.domain.dto.ImageDto;
+import dev.craicic.blazepoc.domain.Post;
+import dev.craicic.blazepoc.domain.dto.PostDto;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.PersistenceUnit;
@@ -19,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SuppressWarnings({"unchecked", "deprecation"})
 @SpringBootTest
-public class BlazePocTests {
+public class HibernateFeaturesTests {
 
     Logger log = LogManager.getLogger(this.getClass().getName());
 
@@ -32,7 +35,7 @@ public class BlazePocTests {
         em.getTransaction().begin();
 
         TypedQuery<PostDto> q = em.createQuery("""
-                SELECT new dev.craicic.blazepoc.PostDto(p.id, p.title, p.body, i.id, ib.content) FROM Image i
+                SELECT new dev.craicic.blazepoc.domain.dto.PostDto(p.id, p.title, p.body, i.id, ib.content) FROM Image i
                 JOIN ImageBlob ib ON ib.id = i.id
                 JOIN i.post p
                 """, PostDto.class);
@@ -50,7 +53,7 @@ public class BlazePocTests {
         em.getTransaction().begin();
 
         TypedQuery<PostDto> q = em.createQuery("""
-                SELECT new dev.craicic.blazepoc.PostDto(p.id, p.title, p.body, i.id, ib.content) FROM Post p
+                SELECT new dev.craicic.blazepoc.domain.dto.PostDto(p.id, p.title, p.body, i.id, ib.content) FROM Post p
                 JOIN p.images i
                 JOIN ImageBlob ib ON ib.id = i.id
                 """, PostDto.class);
@@ -68,7 +71,7 @@ public class BlazePocTests {
         em.getTransaction().begin();
 
         TypedQuery<PostDto> q = em.createQuery("""
-                SELECT new dev.craicic.blazepoc.PostDto(p.id, p.title, p.body, i.id, ib.content) FROM Image i, Post p, ImageBlob ib
+                SELECT new dev.craicic.blazepoc.domain.dto.PostDto(p.id, p.title, p.body, i.id, ib.content) FROM Image i, Post p, ImageBlob ib
                 WHERE ib.id = i.id
                 AND p.id = i.post.id
                 """, PostDto.class);
@@ -192,12 +195,12 @@ public class BlazePocTests {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
 
-        TypedQuery<PostDto> q1 = em.createQuery("SELECT new dev.craicic.blazepoc.PostDto(p.id, p.title, p.body) FROM Post p", PostDto.class);
+        TypedQuery<PostDto> q1 = em.createQuery("SELECT new dev.craicic.blazepoc.domain.dto.PostDto(p.id, p.title, p.body) FROM Post p", PostDto.class);
         List<PostDto> posts = q1.setMaxResults(4).getResultList();
 
         for (PostDto p : posts) {
             TypedQuery<ImageDto> q2 = em.createQuery(""" 
-                    SELECT new dev.craicic.blazepoc.ImageDto(i.id, ib.content)
+                    SELECT new dev.craicic.blazepoc.domain.dto.ImageDto(i.id, ib.content)
                     FROM Image i
                     JOIN ImageBlob ib ON i.id = ib.id
                     WHERE i.post.id = :postId
