@@ -115,7 +115,7 @@ public class HibernateFeaturesTests {
 
 
     @Test
-    public void getPostsWithResultTransformerTest() {
+    public void getPostsWithTupleTransformerTest() {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
         Session session = em.unwrap(Session.class);
@@ -144,7 +144,7 @@ public class HibernateFeaturesTests {
     }
 
     @Test
-    public void getPostsWithResultTransformerIITest() {
+    public void getPostsWithResultListTransformerTest() {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
         Session session = em.unwrap(Session.class);
