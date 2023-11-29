@@ -173,6 +173,9 @@ public class HibernateFeaturesTests {
                         """)
                 .setTupleTransformer((tuple, aliases) -> {
                     log.info("Transform tuple");
+                    if (resultPosts.size() >= 4) {
+                        return null;
+                    }
                     if (tuple[0] != lastId) {
                         p = new PostDto();
                         p.setId((Integer) tuple[0]);
@@ -183,19 +186,18 @@ public class HibernateFeaturesTests {
                         resultPosts.add(p);
                     }
                     p.getImages().add(new ImageDto((Integer) tuple[3], (byte[]) tuple[4]));
-                    return null;
+                    return p;
                 })
                 .setResultListTransformer(list -> {
                     log.info("Transform list");
-                    return  list;
+                    return resultPosts;
                 })
                 .getResultList();
         log.info(dto.toString());
-
         em.getTransaction().commit();
         em.close();
 
-        assertEquals(5, dto.size());
+        assertEquals(4, dto.size());
     }
 
     @Test
@@ -280,11 +282,11 @@ public class HibernateFeaturesTests {
         posts.forEach(p -> ids.add(p.getId()));
 
         TypedQuery<ImageWIthPostIdDto> q2 = em.createQuery("""
-                    SELECT new dev.craicic.blazepoc.domain.dto.ImageWIthPostIdDto(i.id, ib.content, i.post.id)
-                    FROM Image i
-                    JOIN ImageBlob ib ON i.id = ib.id
-                    WHERE i.post.id IN :postIds
-                    """, ImageWIthPostIdDto.class);
+                SELECT new dev.craicic.blazepoc.domain.dto.ImageWIthPostIdDto(i.id, ib.content, i.post.id)
+                FROM Image i
+                JOIN ImageBlob ib ON i.id = ib.id
+                WHERE i.post.id IN :postIds
+                """, ImageWIthPostIdDto.class);
         q2.setParameter("postIds", ids);
         List<ImageWIthPostIdDto> images = q2.getResultList();
 
