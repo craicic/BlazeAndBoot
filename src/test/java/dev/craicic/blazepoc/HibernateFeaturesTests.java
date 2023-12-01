@@ -36,11 +36,13 @@ public class HibernateFeaturesTests {
     private List<PostDto> resultPosts;
     private Integer lastId;
     private int postCounter;
+    private PostDto p;
 
     @BeforeEach
     public void beforeEach() {
         resultPosts = new ArrayList<>();
-        lastId = null;
+        lastId = -1;
+        p = new PostDto();
         postCounter = 0;
     }
 
@@ -150,8 +152,8 @@ public class HibernateFeaturesTests {
                         """, Object[].class)
                 .setTupleTransformer((tuple, aliases) -> {
                     log.info("Transform tuple");
-                    PostDto p = new PostDto();
                     if (tuple[0] != lastId) {
+                        p = new PostDto();
                         postCounter++;
                         if (postCounter > maxResult) {
                             return null;
@@ -163,6 +165,7 @@ public class HibernateFeaturesTests {
                         resultPosts.add(p);
                     }
                     if (tuple[3] != null && tuple[4] != null) {
+                        log.info("adding a new image");
                         p.getImages().add(new ImageDto((Integer) tuple[3], (byte[]) tuple[4]));
                     }
                     return p;
