@@ -35,17 +35,17 @@ public class HibernateFeaturesTests {
 
     private List<PostDto> resultPosts;
     private Integer lastId;
-    private PostDto p;
+    private int postCounter;
 
     @BeforeEach
     public void beforeEach() {
         resultPosts = new ArrayList<>();
         lastId = null;
-        p = new PostDto();
+        postCounter = 0;
     }
 
     @Test
-    public void getPostsWithJoinTest() {
+    public void getPostsWithImagesJoinTest() {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
 
@@ -63,7 +63,7 @@ public class HibernateFeaturesTests {
     }
 
     @Test
-    public void getPostsWithJoinIITest() {
+    public void getPostsWithImagesJoinIITest() {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
 
@@ -81,7 +81,7 @@ public class HibernateFeaturesTests {
     }
 
     @Test
-    public void getPostsNoJoinTest() {
+    public void getPostsWithImagesNoJoinTest() {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
 
@@ -110,17 +110,20 @@ public class HibernateFeaturesTests {
         em.getTransaction().commit();
         em.close();
 
-        assertEquals(5, r.size());
+        assertEquals(6, r.size());
     }
 
+    /**
+     * No LEFT clause, so the post without image will not be selected.
+     * The JOIN FETCH clause will result in one query only.
+     */
     @Test
     public void getPostsWithJoinFetchTest() {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
 
-        TypedQuery<Post> q = em.createQuery("SELECT p FROM Post p JOIN FETCH p.images i", Post.class);
+        TypedQuery<Post> q = em.createQuery("SELECT p FROM Post p JOIN FETCH p.images i JOIN ImageBlob ib ON i.id = ib.id", Post.class);
         List<Post> r = q.getResultList();
-        // The JOIN FETCH clause will result in one query only.
         r.forEach(post -> log.info(post));
         em.getTransaction().commit();
         em.close();
@@ -128,64 +131,40 @@ public class HibernateFeaturesTests {
         assertEquals(5, r.size());
     }
 
-
+    /**
+     * Left Join clause make sure we also select Posts that contain no Images
+     */
     @Test
-    public void getPostsWithTupleTransformerTest() {
+    public void getPostsTupleThenListTransformerTest() {
+
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
         Session session = em.unwrap(Session.class);
-        List<PostDto> dto = (List<PostDto>) session
+        final int maxResult = 6;
+        List<PostDto> dto = session
                 .createQuery("""
                         SELECT p.id, p.title, p.body, i.id, ib.content FROM Post p
-                        JOIN p.images i ON p.id = i.post.id
-                        JOIN ImageBlob ib ON i.id = ib.id
-                        WHERE p.id = 1
-                        """)
+                        LEFT JOIN p.images i
+                        LEFT JOIN ImageBlob ib ON i.id = ib.id
+                        ORDER BY p.id
+                        """, Object[].class)
                 .setTupleTransformer((tuple, aliases) -> {
                     log.info("Transform tuple");
                     PostDto p = new PostDto();
-                    p.setId((Integer) tuple[0]);
-                    p.setTitle((String) tuple[1]);
-                    p.setBody((String) tuple[2]);
-                    p.getImages().add(new ImageDto((Integer) tuple[3], (byte[]) tuple[4]));
-                    return p;
-                }).getResultList();
-        log.info(dto.toString());
-
-        em.getTransaction().commit();
-        em.close();
-
-        assertEquals(10, dto.size());
-    }
-
-    @Test
-    public void getPostsWithTupleTransformerThenListTransformerTest() {
-
-        EntityManager em = emf.createEntityManager();
-        em.getTransaction().begin();
-        Session session = em.unwrap(Session.class);
-        List<PostDto> dto = (List<PostDto>) session
-                .createQuery("""
-                        SELECT p.id, p.title, p.body, i.id, ib.content FROM Post p
-                        JOIN p.images i ON p.id = i.post.id
-                        JOIN ImageBlob ib ON i.id = ib.id
-                        ORDER BY p.id
-                        """)
-                .setTupleTransformer((tuple, aliases) -> {
-                    log.info("Transform tuple");
-                    if (resultPosts.size() >= 4) {
-                        return null;
-                    }
                     if (tuple[0] != lastId) {
-                        p = new PostDto();
+                        postCounter++;
+                        if (postCounter > maxResult) {
+                            return null;
+                        }
+                        lastId = (Integer) tuple[0];
                         p.setId((Integer) tuple[0]);
                         p.setTitle((String) tuple[1]);
                         p.setBody((String) tuple[2]);
-                        p.getImages().add(new ImageDto((Integer) tuple[3], (byte[]) tuple[4]));
-                        lastId = (Integer) tuple[0];
                         resultPosts.add(p);
                     }
-                    p.getImages().add(new ImageDto((Integer) tuple[3], (byte[]) tuple[4]));
+                    if (tuple[3] != null && tuple[4] != null) {
+                        p.getImages().add(new ImageDto((Integer) tuple[3], (byte[]) tuple[4]));
+                    }
                     return p;
                 })
                 .setResultListTransformer(list -> {
@@ -197,9 +176,12 @@ public class HibernateFeaturesTests {
         em.getTransaction().commit();
         em.close();
 
-        assertEquals(4, dto.size());
+        assertEquals(6, dto.size());
     }
 
+    /**
+     * This method use a native query and array_agg() function. It results in a single object[][] that have to be handled.
+     */
     @Test
     public void getPostsWithResultListTransformerTest() {
         EntityManager em = emf.createEntityManager();
@@ -210,9 +192,9 @@ public class HibernateFeaturesTests {
                 .createNativeQuery("""
                         SELECT p.id, p.title, p.body, array_agg(i.id) as images_id, array_agg(ib.content) as images_content
                         FROM post AS p
-                            JOIN image AS i ON p.id = i.post_id
-                            JOIN image_blob AS ib ON i.id = ib.image_id
-                        GROUP BY p.id ORDER BY p.id LIMIT 4;
+                            LEFT JOIN image AS i ON p.id = i.post_id
+                            LEFT JOIN image_blob AS ib ON i.id = ib.image_id
+                        GROUP BY p.id ORDER BY p.id LIMIT 6;
                         """)
                 .setResultListTransformer((list) -> {
                             List<Object> l = (List<Object>) list;
@@ -225,23 +207,32 @@ public class HibernateFeaturesTests {
                                 p.setId((Integer) obj[0]);
                                 p.setTitle((String) obj[1]);
                                 p.setBody((String) obj[2]);
+
                                 Integer[] imageIdList = (Integer[]) obj[3];
                                 byte[][] byteArrayList = (byte[][]) obj[4];
-                                for (int i = 0; i < imageIdList.length && i < byteArrayList.length; i++) {
-                                    p.getImages().add(
-                                            new ImageDto(
-                                                    imageIdList[i],
-                                                    byteArrayList[i]
-                                            ));
+
+                                if ((imageIdList.length != 1 || imageIdList[0] != null)
+                                    &&
+                                    (byteArrayList.length != 1 || byteArrayList[0] != null)) {
+                                    for (int i = 0; i < imageIdList.length && i < byteArrayList.length; i++) {
+                                        p.getImages().add(
+                                                new ImageDto(
+                                                        imageIdList[i],
+                                                        byteArrayList[i]
+                                                ));
+                                    }
                                 }
                                 posts.add(p);
                             }
                             return posts;
                         }
                 ).getResultList();
-        em.getTransaction().commit();
+        em.getTransaction().
+
+                commit();
         em.close();
-        assertEquals(4, dto.size());
+
+        assertEquals(6, dto.size());
         log.info(dto);
     }
 
@@ -295,5 +286,48 @@ public class HibernateFeaturesTests {
         em.close();
         assertEquals(4, posts.size());
         log.info(posts);
+    }
+
+    @Test
+    public void getPostsCodingChallengeMethod() {
+        EntityManager em = emf.createEntityManager();
+        em.getTransaction().begin();
+
+
+        List<PostDto> posts = (List<PostDto>) em.unwrap(Session.class)
+                .createQuery("""
+                        SELECT p.id, p.title, p.body, i.id, ib.content FROM Post p
+                        LEFT JOIN p.images i
+                        LEFT JOIN ImageBlob ib ON i.id = ib.id
+                        ORDER BY p.id""")
+                .setResultListTransformer(list -> {
+                    List<Object[]> l = list;
+                    List<PostDto> postDtoList = new ArrayList<>();
+                    log.info("Transform list");
+                    Integer lastId = null;
+                    PostDto value = new PostDto();
+                    for (Object[] e : l) {
+                        if (e[0] != lastId) {
+                            value = new PostDto();
+                            value.setId((Integer) e[0]);
+                            value.setTitle((String) e[1]);
+                            value.setBody((String) e[2]);
+                            lastId = (Integer) e[0];
+                            postDtoList.add(value);
+                        }
+                        if (e[3] != null && e[4] != null) {
+                            value.getImages().add(new ImageDto((Integer) e[3], (byte[]) e[4]));
+                        }
+                    }
+
+                    return postDtoList;
+                }).getResultList();
+
+        assertEquals(6, posts.size());
+
+        posts.forEach(e -> log.info(e));
+
+        em.getTransaction().commit();
+        em.close();
     }
 }

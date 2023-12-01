@@ -3,8 +3,9 @@ VALUES (1, 'A very long post about testing Blaze Persistence !', 'Blaze Persiste
        (2, 'A talk on JPA !', 'JPA Tips'),
        (3, 'An article on Hibernate', 'Learn Hibernate in 17 seconds -_-'),
        (4, 'A promotional post about PH', 'Join our Working Group !'),
-       (5, 'A book on Jooq in great details', 'Jooq in depth');
-SELECT setval('post_seq', 5, true);
+       (5, 'A book on Jooq in great details', 'Jooq in depth'),
+       (6, 'A topic about result transformer in Hibernate ', 'Code it yourself');
+SELECT setval('post_seq', 6, true);
 
 
 
