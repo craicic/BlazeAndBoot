@@ -1,7 +1,7 @@
 package dev.craicic.blazepoc;
 
-import dev.craicic.blazepoc.domain.dto.ImageDto;
 import dev.craicic.blazepoc.domain.Post;
+import dev.craicic.blazepoc.domain.dto.ImageDto;
 import dev.craicic.blazepoc.domain.dto.ImageWIthPostIdDto;
 import dev.craicic.blazepoc.domain.dto.PostDto;
 import jakarta.persistence.EntityManager;
@@ -18,8 +18,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -304,12 +302,11 @@ public class HibernateFeaturesTests {
                         LEFT JOIN ImageBlob ib ON i.id = ib.id
                         ORDER BY p.id""")
                 .setResultListTransformer(list -> {
-                    List<Object[]> l = list;
                     List<PostDto> postDtoList = new ArrayList<>();
                     log.info("Transform list");
                     Integer lastId = null;
                     PostDto value = new PostDto();
-                    for (Object[] e : l) {
+                    for (Object[] e : (List<Object[]>) list) {
                         if (e[0] != lastId) {
                             value = new PostDto();
                             value.setId((Integer) e[0]);
