@@ -150,13 +150,13 @@ public class HibernateFeaturesTests {
     /**
      * This method use a native query and array_agg() function. It results in a single object[][] that have to be handled.
      * Pros :
-     *  - query has LIMIT
+     * - query has LIMIT
      * Cons :
-     *  - unchecked
-     *  - code is a bit complicated
-     *  - uses array_agg
-     *  - slow
-     *  Acceptance : Bad, I prefer getPostsUsingResultListTransformerTest over this one.
+     * - unchecked
+     * - code is a bit complicated
+     * - uses array_agg
+     * - slow
+     * Acceptance : Bad, I prefer getPostsUsingResultListTransformerTest over this one.
      */
     @Test
     public void getPostsUsingResultListTransformerTestUnchecked() {
@@ -217,13 +217,13 @@ public class HibernateFeaturesTests {
     /**
      * This method use a native query and array_agg() function. It results in a single object[] that have to be handled.
      * Pros :
-     *  - checked
-     *  - code is simple
-     *  - query has LIMIT
+     * - checked
+     * - code is simple
+     * - query has LIMIT
      * Cons :
-     *  - uses array_agg
-     *  - slow
-     *  Acceptance : Medium. Slow, but I think it can be improved since array_agg looks to take advantage of hibernate cache.
+     * - uses array_agg
+     * - slow
+     * Acceptance : Medium. Slow, but I think it can be improved since array_agg looks to take advantage of hibernate cache.
      */
     @Test
     public void getPostsUsingResultListTransformerTest() {
@@ -251,7 +251,7 @@ public class HibernateFeaturesTests {
                                     &&
                                     (byteArrayList.length != 1 || byteArrayList[0] != null)) {
                                     for (int i = 0; i < imageIdList.length && i < byteArrayList.length; i++) {
-                                        p.getImages().add(new ImageDto(imageIdList[i],byteArrayList[i]));
+                                        p.getImages().add(new ImageDto(imageIdList[i], byteArrayList[i]));
                                     }
                                 }
                                 dto.add(p);
@@ -266,17 +266,69 @@ public class HibernateFeaturesTests {
         log.info(dto);
     }
 
+    /**
+     * This method use a native query.
+     * Pros :
+     * - checked
+     * - code is simple
+     * - query has LIMIT
+     * - FAST
+     * Cons : no one
+     * Acceptance : HIGH.
+     */
+    @Test
+    public void getPostsUsingResultListTransformerNoArrayAggTest() {
+        EntityManager em = emf.createEntityManager();
+        em.getTransaction().begin();
+        Session session = em.unwrap(Session.class);
+
+        List<PostDto> dto = session.createNativeQuery("""
+                        SELECT p.id, p.title, p.body, i.id, ib.content
+                        FROM post AS p
+                            LEFT JOIN image AS i ON p.id = i.post_id
+                            LEFT JOIN image_blob AS ib ON i.id = ib.image_id
+                        WHERE p.id IN (SELECT p2.id FROM post as p2 LIMIT 6)
+                        ORDER BY p.id;
+                        """, Object[].class)
+                .setTupleTransformer((tuple, aliases) -> {
+                    log.info("Transform tuple");
+                    // We NEED the result to be ordered by id !
+                    if (tuple[0] != lastId) {
+                        p = new PostDto();
+                        lastId = (Integer) tuple[0];
+                        p.setId((Integer) tuple[0]);
+                        p.setTitle((String) tuple[1]);
+                        p.setBody((String) tuple[2]);
+                        resultPosts.add(p);
+                    }
+                    if (tuple[3] != null && tuple[4] != null) {
+                        log.info("adding a new image");
+                        p.getImages().add(new ImageDto((Integer) tuple[3], (byte[]) tuple[4]));
+                    }
+                    return p;
+                })
+                .setResultListTransformer(list -> {
+                    log.info("Transform list");
+                    return resultPosts;
+                }).getResultList();
+        em.getTransaction().commit();
+        em.close();
+
+        assertEquals(6, dto.size());
+        log.info(dto);
+    }
+
 
     /**
      * Pros :
-     *  - checked
-     *  - code is very simple and straightforward
-     *  - virtually bug free
-     *  - query has a limitation
+     * - checked
+     * - code is very simple and straightforward
+     * - virtually bug free
+     * - query has a limitation
      * Cons :
-     *  - N+1 queries
-     *  - slow
-     *  - unfinished, does not include post that has no image.
+     * - N+1 queries
+     * - slow
+     * - unfinished, does not include post that has no image.
      * Acceptance : Mixed, only use it if few users use the api endpoint AND if the setMaxResult number is really low (<5?)
      */
     @Test
@@ -337,12 +389,12 @@ public class HibernateFeaturesTests {
     /**
      * Left Join clause make sure we also select Posts that contain no Images
      * Pros :
-     *  - looks fast
-     *  - checked
-     *  - session returns the wanted list of post
-     *  - code simplicity is OK
+     * - looks fast
+     * - checked
+     * - session returns the wanted list of post
+     * - code simplicity is OK
      * Cons :
-     *  - Query has no LIMIT, limitation is in tuple transformation.
+     * - Query has no LIMIT, limitation is in tuple transformation.
      * Acceptance : Low, because of the lack of limit
      */
     @Test
@@ -382,8 +434,7 @@ public class HibernateFeaturesTests {
                 .setResultListTransformer(list -> {
                     log.info("Transform list");
                     return resultPosts;
-                })
-                .getResultList();
+                }).getResultList();
         log.info(dto.toString());
         em.getTransaction().commit();
         em.close();
