@@ -324,7 +324,7 @@ public class HibernateFeaturesTests {
                 WHERE i.post.id IN :postIds
                 """, ImageWIthPostIdDto.class);
         q2.setParameter("postIds", ids);
-        List<ImageWIthPostIdDto> images = q2.getResultList();
+        q2.getResultList();
 
         // I give up this one
 
