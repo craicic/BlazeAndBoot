@@ -35,7 +35,6 @@ public class HibernateFeaturesTests {
 
     private List<PostDto> resultPosts;
     private Integer lastId;
-    private int postCounter;
     private PostDto p;
 
     @BeforeEach
@@ -43,7 +42,6 @@ public class HibernateFeaturesTests {
         resultPosts = new ArrayList<>();
         lastId = -1;
         p = new PostDto();
-        postCounter = 0;
     }
 
     /**
@@ -415,10 +413,6 @@ public class HibernateFeaturesTests {
                     // We NEED the result to be ordered by id !
                     if (tuple[0] != lastId) {
                         p = new PostDto();
-                        postCounter++;
-                        if (postCounter > maxResult) {
-                            return null;
-                        }
                         lastId = (Integer) tuple[0];
                         p.setId((Integer) tuple[0]);
                         p.setTitle((String) tuple[1]);
